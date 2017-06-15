@@ -1,0 +1,5 @@
+
+node_modules
+config
+claudia.json
+.DS_Store
