@@ -2,13 +2,14 @@
   "name": "employee-support",
   "version": "1.0.0",
   "description": "",
+  "private": true,
   "main": "index.js",
   "config": {
     "aws_params": "--profile claudia --region us-east-1 --role employee-support-executor"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "create-greet": "claudia create --name greet --handler greeter.handler --config config/greeter.json $npm_package_config_aws_params" ,
+    "create-greet": "claudia create --name greet --handler greeter.handler --config config/greeter.json $npm_package_config_aws_params",
     "update-greet": "claudia update --config config/greeter.json $npm_package_config_aws_params",
     "create-info": "claudia create --name businessInfo --handler info.handler --config config/info.json $npm_package_config_aws_params",
     "update-info": "claudia update --config config/info.json $npm_package_config_aws_params",
@@ -22,6 +23,9 @@
     "claudia": "^2.13.0"
   },
   "dependencies": {
+    "aws-sdk": "^2.70.0",
+    "bluebird": "^3.5.0",
+    "dynamodb-doc": "^1.0.0",
     "greeting": "^1.0.6"
   }
 }

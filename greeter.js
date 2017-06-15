@@ -16,7 +16,7 @@ exports.handler = function (event, context) {
         content: greeting.random() + "! What can I help you with?"
       }
     }
-  }
+  };
 
   context.succeed(resp);
 };
