@@ -4,6 +4,7 @@
 
 var Promise = require('bluebird'),
     PhoneNumber = require('awesome-phonenumber'),
+    LexUtils = require('./lexUtils'),
     AWS = require('aws-sdk'),
     DOC = require('dynamodb-doc');
 
@@ -48,24 +49,24 @@ function dateForDateString(dateStr) {
   }
 }
 
-function validationResult(valid, violatedSlot, message) {
+function validationResult(valid, violatedSlot, messageText) {
   return {
-    valid, violatedSlot, message
+    valid, violatedSlot, message: { contentType: 'PlainText', content: messageText }
   };
 }
 
 function validateCall(slots) {
-  const name = slots.name, phone = slots.phone, date = slots.date, time = slots.time;
+  const phone = slots.phone, date = slots.date, time = slots.time;
 
   // Validate 'name'
-  if (name.length == 0) {
-    return validationResult(false, "name", "Please specify your name for our records.");
-  }
+  // if (name.length == 0) {
+  //   return validationResult(false, "name", "Please specify your name for our records.");
+  // }
 
   // Validate 'phone'
-  let parsedPhone = PhoneNumber(phone);
-  if (!parsedPhone.isValid()) {
-    return validationResult(false, "phone", `The number "${parsedPhone.getNumber()}" is not valid. Please specify a different number.`);
+  let parsedPhone = phone ? PhoneNumber(phone, "US") : null;
+  if (parsedPhone && !parsedPhone.isValid()) {
+    return validationResult(false, "phone", `The number "${phone}" is not valid. Please specify a different number.`);
   }
 
   // Validate 'date'
@@ -73,21 +74,21 @@ function validateCall(slots) {
   if (parsedDate) {
     if (parsedDate < new Date()) {
       // If the provided date that is in the past
-      return validationResult(false, "date", "Please specifiy a date that is today or in the future.");
+      return validationResult(false, "date", "Please specify a date that is today or in the future.");
     }
-  } else {
+  } else if (date) {
     return validationResult(false, "date", "I could not comprehend the provided date. Can you please respecify it?");
   }
 
   // Validate 'time'
-  if (time) {
+  if (parsedDate && time) {
     var timeComponents = time.split(":");
     parsedDate.hours = timeComponents[0];
     parsedDate.minutes = timeComponents[1];
 
     if (parsedDate < new Date()) {
       // If the provided time that is in the past
-      return validationResult(false, "date", "Please specifiy a time later today.");
+      return validationResult(false, "date", "Please specify a time later today.");
     }
   }
 
@@ -99,7 +100,31 @@ function validateCall(slots) {
  */
 
 function scheduleCall(request, callback) {
-  // TODO: Method Stub
+  const slots = request.currentIntent.slots;
+  const sessionAttributes = request.sessionAttributes || {};
+
+  sessionAttributes.request = String(JSON.stringify(slots));
+
+  if (request.invocationSource === "DialogCodeHook") {
+      // Validate any slots and re-elicit
+      const validationResult = validateCall(slots);
+
+      if (!validationResult.valid) {
+        // If an invalid field exists
+        slots[`${validationResult.violatedSlot}`] = null;
+        callback(LexUtils.elicitSlotForIntent(sessionAttributes, request.currentIntent.name, slots, validationResult.violatedSlot, validationResult.message));
+      } else {
+        // Otherwise, let native DM rules determine how to elicit for slots and prompt for confirmation.  Pass price back in sessionAttributes once it can be calculated; otherwise clear any setting from sessionAttributes.
+        callback(LexUtils.delegateResponse(sessionAttributes, slots));
+      }
+  } else {
+    // Schedule phone call
+    // TODO: Implement business logic
+    console.log(`scheduleCall sessionAttributes=${sessionAttributes.request}`);
+
+    callback(LexUtils.closeIntent(sessionAttributes, 'Fulfilled',
+    { contentType: 'PlainText', content: `Thanks, Your call has been placed in queue. We'll call you at ${slots.phone} around ${slots.time} on ${slots.date}.` }));
+  }
 }
 
 function getCallStatus(request, callback) {
@@ -115,9 +140,9 @@ function performIntent(event, callback) {
 
   switch (intent) {
     case "ScheduleCall":
+      scheduleCall(event, callback);
       break;
     case "CallStatus":
-      break;
     default:
       throw new Error(`"${intent}" intent not supported.`);
   }

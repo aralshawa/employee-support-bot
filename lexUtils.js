@@ -8,12 +8,11 @@ const LEX_CLOSE_INTENT = "Close"
 const LEX_DELEGATE_RESPONSE = "Delegate"
 
 function lexResponse(sessionAttributes, type, options) {
+  var dialogAction = Object.assign({}, {type}, options);
+
   return {
       sessionAttributes,
-      dialogAction: {
-          type,
-          ...options
-      },
+      dialogAction
   };
 }
 
@@ -41,6 +40,6 @@ function delegateResponse(sessionAttributes, slots) {
   });
 }
 
-exports = {
+module.exports = {
   elicitSlotForIntent, confirmIntent, closeIntent, delegateResponse
 }
