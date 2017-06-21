@@ -9,7 +9,6 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-
     "create-greet": "claudia create --name greet --handler greeter.handler --config config/greeter.json $npm_package_config_aws_params",
     "update-greet": "claudia update --config config/greeter.json $npm_package_config_aws_params",
     "create-info": "claudia create --name businessInfo --handler info.handler --config config/info.json $npm_package_config_aws_params",
@@ -18,7 +17,6 @@
     "update-gratitude": "claudia update --config config/gratitude.json $npm_package_config_aws_params",
     "create-callScheduling": "claudia create --name callScheduling --handler callScheduling.handler --config config/callScheduling.json $npm_package_config_aws_params",
     "update-callScheduling": "claudia update --config config/callScheduling.json $npm_package_config_aws_params",
-
     "create": "mkdir -p config && npm run create-greet & npm run create-info & npm run create-gratitude & npm run create-callScheduling",
     "update": "npm run update-greet & npm run update-info & npm run update-gratitude & npm run update-callScheduling"
   },
@@ -29,6 +27,7 @@
     "claudia": "^2.13.0"
   },
   "dependencies": {
+    "awesome-phonenumber": "^1.4.0",
     "aws-sdk": "^2.70.0",
     "bluebird": "^3.5.0",
     "dynamodb-doc": "^1.0.0",
