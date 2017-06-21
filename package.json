@@ -16,9 +16,11 @@
     "update-info": "claudia update --config config/info.json $npm_package_config_aws_params",
     "create-gratitude": "claudia create --name gratitude --handler gratitude.handler --config config/gratitude.json $npm_package_config_aws_params",
     "update-gratitude": "claudia update --config config/gratitude.json $npm_package_config_aws_params",
+    "create-callScheduling": "claudia create --name callScheduling --handler callScheduling.handler --config config/callScheduling.json $npm_package_config_aws_params",
+    "update-callScheduling": "claudia update --config config/callScheduling.json $npm_package_config_aws_params",
 
-    "create": "mkdir -p config && npm run create-greet & npm run create-info & npm run create-gratitude",
-    "update": "npm run update-greet & npm run update-info & npm run update-gratitude"
+    "create": "mkdir -p config && npm run create-greet & npm run create-info & npm run create-gratitude & npm run create-callScheduling",
+    "update": "npm run update-greet & npm run update-info & npm run update-gratitude & npm run update-callScheduling"
   },
   "keywords": [],
   "author": "",
