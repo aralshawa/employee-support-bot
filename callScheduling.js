@@ -2,28 +2,21 @@
  * TODO
  */
 
-var Promise = require('bluebird'),
-    PhoneNumber = require('awesome-phonenumber'),
+var PhoneNumber = require('awesome-phonenumber'),
     LexUtils = require('./lexUtils'),
-    AWS = require('aws-sdk'),
-    DOC = require('dynamodb-doc');
-
-// Create a promisified version of the docClient
-var docClient = Promise.promisifyAll(new DOC.DynamoDB())
+    Database = require('./databaseUtils');
 
 /*
  * Database Operations
  */
 
-function getTableName() {
-  return "support-calls";
-}
+const EMPLOYEE_CALLS_TABLE = "support-calls";
 
 function getCallForNumber(phoneNumber) {
     var params = {
-        TableName: getTableName(),
+        TableName: EMPLOYEE_CALLS_TABLE,
         Key: {
-            phoneNumber: phoneNumber
+            callID: phoneNumber
         }
     };
 

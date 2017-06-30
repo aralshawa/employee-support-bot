@@ -62,3 +62,4 @@ References
 * [Integrating an Amazon Lex Bot with Slack](http://docs.aws.amazon.com/lex/latest/dg/slack-bot-association.html)
 * [Claudia Issue #16 - Multiple lambda Entries in claudia.json](https://github.com/claudiajs/claudia/issues/16)
 * [npm scripting: configs and arguments](http://www.marcusoft.net/2015/08/npm-scripting-configs-and-arguments.html)
+* [Lex & Alexa Slot Type Reference](https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/built-in-intent-ref/slot-type-reference)

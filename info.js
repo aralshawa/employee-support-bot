@@ -2,26 +2,19 @@
  * A AWS Lambda function to perform a info lookup depending on the request.
  */
 
-var Promise = require('bluebird'),
-    AWS = require('aws-sdk'),
-    DOC = require('dynamodb-doc');
+var Database = require('./databaseUtils');
 
-// Create a promisified version of the docClient
-var docClient = Promise.promisifyAll(new DOC.DynamoDB())
-
-function getTableName() {
-  return "employee-support-info";
-}
+const EMPLOYEE_SUPPORT_TABLE = "employee-support-info";
 
 function getSupportDescription(key) {
     var params = {
-        TableName: getTableName(),
+        TableName: EMPLOYEE_SUPPORT_TABLE,
         Key: {
             infoID: key
         }
     };
 
-    return docClient.getItemAsync(params);
+    return Database.client.getAsync(params);
 }
 
 exports.handler = function (event, context, callback) {
