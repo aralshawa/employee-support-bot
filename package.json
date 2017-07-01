@@ -30,6 +30,7 @@
     "awesome-phonenumber": "^1.4.0",
     "aws-sdk": "^2.70.0",
     "bluebird": "^3.5.0",
-    "greeting": "^1.0.6"
+    "greeting": "^1.0.6",
+    "hasha": "^3.0.0"
   }
 }

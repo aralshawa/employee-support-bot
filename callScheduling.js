@@ -3,6 +3,7 @@
  */
 
 var PhoneNumber = require('awesome-phonenumber'),
+    hasha = require('hasha'),
     LexUtils = require('./lexUtils'),
     Database = require('./databaseUtils');
 
@@ -10,17 +11,42 @@ var PhoneNumber = require('awesome-phonenumber'),
  * Database Operations
  */
 
-const EMPLOYEE_CALLS_TABLE = "support-calls";
+const EMPLOYEE_CALLS_TABLE = "employee-support-calls";
 
-function getCallForNumber(phoneNumber) {
-    var params = {
-        TableName: EMPLOYEE_CALLS_TABLE,
-        Key: {
-            callID: phoneNumber
-        }
-    };
+function getActiveCallsForNumber(phoneNumber) {
+  var params = {
+      TableName: EMPLOYEE_CALLS_TABLE,
+      ProjectionExpression:"callID, #st, phone, timestamp",
+      KeyConditionExpression: "phone = :phoneNumber AND #st between :stRange1 and :stRange2",
+      ExpressionAttributeNames:{
+        "#st": "status"
+      },
+      ExpressionAttributeValues: {
+        ":phoneNumber": phoneNumber.replace(/[^0-9]/g, ""),
+        ":stRange1": 0,
+        ":stRange2": 20
+      }
+  };
 
-    return docClient.getItemAsync(params);
+  return Database.client.queryAsync(params);
+}
+
+function putActiveCall(phoneNumber, dateStr, timeStr) {
+  var numericPhone = parseInt(phoneNumber.replace(/[^0-9]/g, ""), 10);
+  var parsedDate = dateForDateTimeStrTuple(dateStr, timeStr);
+  var timestamp = parsedDate ? parsedDate.getTime() / 1000 : null;
+
+  var params = {
+      TableName: EMPLOYEE_CALLS_TABLE,
+      Item: {
+          callID: hasha([numericPhone.toString(), timestamp.toString()], {algorithm: 'md5'}),
+          phone: numericPhone,
+          status: 0,
+          timestamp
+      }
+  };
+
+  return Database.client.putAsync(params);
 }
 
 /*
@@ -37,6 +63,46 @@ function dateForDateString(dateStr) {
     let parsedDate = new Date(dateComponents[0], dateComponents[1] - 1, dateComponents[2]);
 
     return !(isNaN(parsedDate.getTime())) ? parsedDate : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function dateForDateTimeStrTuple(dateStr, timeStr) {
+  // Translates the date and time strings to a Date object
+  try {
+    if (dateStr == null) throw "Unspecified date string.";
+
+    var parsedDate = dateForDateString(dateStr);
+
+    if (parsedDate && timeStr) {
+      var timeComponents = timeStr.split(":");
+      parsedDate.hours = timeComponents[0];
+      parsedDate.minutes = timeComponents[1];
+    }
+    return parsedDate;
+  } catch (error) {
+    return null;
+  }
+}
+
+function dateForEpochTime(epochSec) {
+  try {
+    if (epochSec == null) throw "Unspecified epoch time.";
+
+    var date = new Date(0); // The 0 there is the key, which sets the date to the epoch
+    date.setUTCSeconds(epochSec);
+
+    return date;
+  } catch (error) {
+    return null;
+  }
+}
+
+function dateStrForDate(date) {
+  try {
+    if (date == null) throw "Unspecified date.";
+    return `${date.getDay()}-${date.getMonth() + 1}-${date.getYear()} ${date.getHours()}:${date.getMinutes()}`;
   } catch (error) {
     return null;
   }
@@ -115,13 +181,18 @@ function scheduleCall(request, callback) {
     // TODO: Implement business logic
     console.log(`scheduleCall sessionAttributes=${sessionAttributes.request}`);
 
-    callback(LexUtils.closeIntent(sessionAttributes, 'Fulfilled',
-    { contentType: 'PlainText', content: `Thanks, Your call has been placed in queue. We'll call you at ${slots.phone} around ${slots.time} on ${slots.date}.` }));
-  }
-}
+    putActiveCall(slots.phone, slots.date, slots.time).then((result) => {
+      const formattedPhone = PhoneNumber(slots.phone, "US").getNumber('national');
 
-function getCallStatus(request, callback) {
-  // TODO: Method Stub
+      if (result.err == null) {
+        callback(LexUtils.closeIntent(sessionAttributes, 'Fulfilled',
+        { contentType: 'PlainText', content: `Thanks, Your call has been placed in queue. We'll call you at ${formattedPhone} around ${slots.time} on ${slots.date}.` }));
+      } else {
+        callback(LexUtils.closeIntent(sessionAttributes, 'Failed',
+        { contentType: 'PlainText', content: `Unfortunately, your request to call you at ${formattedPhone} around ${slots.time} on ${slots.date} could not be completed at this time. Please try again later.` }));
+      }
+    });
+  }
 }
 
 /*
