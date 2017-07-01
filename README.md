@@ -56,10 +56,22 @@ $ npm run create
 
 References
 ------------
+
+#### AWS Lex
 * [Amazon Lex - Programming Model](http://docs.aws.amazon.com/lambda/latest/dg/programming-model.html)
 * [Amazon Lex - Lambda Function Input Event and Response Format](http://docs.aws.amazon.com/lex/latest/dg/lambda-input-response-format.html)
-* [AWS Lambda Function Handlers](http://docs.aws.amazon.com/lambda/latest/dg/nodejs-prog-model-handler.html)
+* [Lex & Alexa Slot Type Reference](https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/built-in-intent-ref/slot-type-reference)
 * [Integrating an Amazon Lex Bot with Slack](http://docs.aws.amazon.com/lex/latest/dg/slack-bot-association.html)
+
+#### AWS Lambda
+* [AWS Lambda Function Handlers](http://docs.aws.amazon.com/lambda/latest/dg/nodejs-prog-model-handler.html)
+
+#### AWS DynamoDB
+* [DynamoDB Action Reference](http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Operations_Amazon_DynamoDB.html)
+* [DynamoDB Document Client API](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html)
+* [Working with DynamoDB](http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithDynamo.html)
+* [Partition Key Theory](https://aws.amazon.com/blogs/database/choosing-the-right-dynamodb-partition-key/)
+
+#### Claudia
 * [Claudia Issue #16 - Multiple lambda Entries in claudia.json](https://github.com/claudiajs/claudia/issues/16)
 * [npm scripting: configs and arguments](http://www.marcusoft.net/2015/08/npm-scripting-configs-and-arguments.html)
-* [Lex & Alexa Slot Type Reference](https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/built-in-intent-ref/slot-type-reference)
