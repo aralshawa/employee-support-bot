@@ -14,22 +14,44 @@ var PhoneNumber = require('awesome-phonenumber'),
 
 const EMPLOYEE_CALLS_TABLE = "employee-support-calls";
 
-function getActiveCallsForNumber(phoneNumber) {
+function getCallsForNumber(phoneNumber) {
+  var numericPhone = parseInt(phoneNumber.replace(/[^0-9]/g, ""), 10);
+
   var params = {
       TableName: EMPLOYEE_CALLS_TABLE,
-      ProjectionExpression:"callID, #st, phone, timestamp",
-      KeyConditionExpression: "phone = :phoneNumber AND #st between :stRange1 and :stRange2",
+      ProjectionExpression:"callID, #st, phone, #ts",
+      KeyConditionExpression: "phone = :phoneNumber",
       ExpressionAttributeNames:{
-        "#st": "status"
+        "#st": "status",
+        "#ts": "timestamp"
       },
       ExpressionAttributeValues: {
-        ":phoneNumber": phoneNumber.replace(/[^0-9]/g, ""),
+        ":phoneNumber": numericPhone
+      }
+  };
+
+  return Database.client.queryAsync(params);
+}
+
+function getActiveCallsForNumber(phoneNumber) {
+  var numericPhone = parseInt(phoneNumber.replace(/[^0-9]/g, ""), 10);
+
+  var params = {
+      TableName: EMPLOYEE_CALLS_TABLE,
+      ProjectionExpression:"callID, #st, phone, #ts",
+      FilterExpression: "phone = :phoneNumber AND #st BETWEEN :stRange1 AND :stRange2",
+      ExpressionAttributeNames:{
+        "#st": "status",
+        "#ts": "timestamp"
+      },
+      ExpressionAttributeValues: {
+        ":phoneNumber": numericPhone,
         ":stRange1": 0,
         ":stRange2": 20
       }
   };
 
-  return Database.client.queryAsync(params);
+  return Database.client.scanAsync(params);
 }
 
 function putActiveCall(phoneNumber, dateStr, timeStr) {
@@ -48,6 +70,18 @@ function putActiveCall(phoneNumber, dateStr, timeStr) {
   };
 
   return Database.client.putAsync(params);
+}
+
+function deleteCall(phone, timestamp) {
+  var params = {
+    TableName: EMPLOYEE_CALLS_TABLE,
+    Key: {
+      phone,
+      timestamp
+    }
+  };
+
+  return Database.client.deleteAsync(params);
 }
 
 /*
@@ -74,6 +108,7 @@ function validateCall(slots) {
     return validationResult(false, "phone", `The number "${phone}" is not valid. Please specify a different number.`);
   }
 
+  // TODO: Validate date and time is within business operating hours
   // Validate 'date'
   var parsedDate = DateUtils.dateForDateString(date);
   if (parsedDate) {
@@ -124,20 +159,67 @@ function scheduleCall(request, callback) {
       }
   } else {
     // Schedule phone call
-    // TODO: Implement business logic
-    console.log(`scheduleCall sessionAttributes=${sessionAttributes.request}`);
+    // If a call is already in queue for this number, request confirmation of replacement.
+    console.log(`scheduleCall sessionAttributes=${sessionAttributes}`);
 
-    putActiveCall(slots.phone, slots.date, slots.time).then((result) => {
-      const formattedPhone = PhoneNumber(slots.phone, "US").getNumber('national');
+    const formattedPhone = PhoneNumber(slots.phone, "US").getNumber('national');
 
-      if (result.err == null) {
-        callback(LexUtils.closeIntent(sessionAttributes, 'Fulfilled',
-        { contentType: 'PlainText', content: `Thanks! Your call has been placed in queue. We'll call you at ${formattedPhone} around ${slots.time} on ${slots.date}.` }));
+    if (request.currentIntent.confirmationStatus == "None") {
+      // If the user has not previously verified that a replacement is desirable
+      getActiveCallsForNumber(slots.phone).then((result) => {
+        console.log("getActiveCallsForNumber ", result.Items);
+
+        if (result.Items.length > 0) {
+          // NOTE: Only support a single active call per phone number.
+          // Request from the user to confirm if they would like to replace the pending call record
+          if (result.Items.length > 1) throw "Multiple active calls for phone number.";
+
+          const scheduledCall = result.Items[0];
+          const dateOfCall = DateUtils.dateForEpochTime(scheduledCall.timestamp);
+
+          sessionAttributes.prevRequest = String(JSON.stringify(scheduledCall));
+
+          callback(LexUtils.confirmIntent(sessionAttributes, request.currentIntent.name, slots, { contentType: 'PlainText', content: `A call is already scheduled with ${formattedPhone} at ${DateUtils.dateStrForDate(dateOfCall)}. Would you like to replace it with a call around ${slots.time} on ${slots.date}?`}))
+        } else {
+          // No pending calls for this number, add it to the queue
+          putActiveCall(slots.phone, slots.date, slots.time).then((result) => {
+            if (result.err == null) {
+              callback(LexUtils.closeIntent(sessionAttributes, 'Fulfilled',
+              { contentType: 'PlainText', content: `Thanks! Your call has been placed in queue. We'll call you at ${formattedPhone} around ${slots.time} on ${slots.date}.`}));
+            } else {
+              callback(LexUtils.closeIntent(sessionAttributes, 'Failed',
+              { contentType: 'PlainText', content: `Unfortunately, your request to call you at ${formattedPhone} around ${slots.time} on ${slots.date} could not be completed at this time. Please try again later.`}));
+            }
+          });
+        }
+      });
+    } else if (request.currentIntent.confirmationStatus == "Denied") {
+      // The user has requested that we reframe from from updating the pending call record
+      callback(LexUtils.closeIntent(sessionAttributes, 'Fulfilled',
+      { contentType: 'PlainText', content: `Alright. The previously configured call is remaining in the queue.`}));
+    } else {
+      // The user has requested that we update the pending call record
+      // NOTE: DynamoDB does not allow mutations on the primary key attributes; thus, need to delete and put.
+      const prevRequest = sessionAttributes.prevRequest ? JSON.parse(sessionAttributes.prevRequest) : null;
+
+      if (prevRequest) {
+        Promise.all([
+          deleteCall(prevRequest.phone, prevRequest.timestamp),
+          putActiveCall(slots.phone, slots.date, slots.time)
+        ]).then((results) => {
+          if (!results[0].err && !results[1].err) {
+            callback(LexUtils.closeIntent(sessionAttributes, 'Fulfilled',
+            { contentType: 'PlainText', content: `Great! The call request has been updated. We'll call you at ${formattedPhone} around ${slots.time} on ${slots.date}.`}));
+          } else {
+            callback(LexUtils.closeIntent(sessionAttributes, 'Failed',
+            { contentType: 'PlainText', content: `Unfortunately, your request to call you at ${formattedPhone} around ${slots.time} on ${slots.date} could not be completed at this time. Please try again later.`}));
+          }
+        });
       } else {
         callback(LexUtils.closeIntent(sessionAttributes, 'Failed',
-        { contentType: 'PlainText', content: `Unfortunately, your request to call you at ${formattedPhone} around ${slots.time} on ${slots.date} could not be completed at this time. Please try again later.` }));
+        { contentType: 'PlainText', content: `Unfortunately, your request to call you at ${formattedPhone} around ${slots.time} on ${slots.date} could not be completed at this time. Please try again later.`}));
       }
-    });
+    }
   }
 }
 

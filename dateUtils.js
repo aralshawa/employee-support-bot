@@ -6,7 +6,7 @@
    // Assuming the standard YYY-MM-DD date format, parse the string and construct a date object
    // A null return indicates a failure to parse the string
    try {
-     if (dateStr == null) throw "Unspecified date string.";
+     if (!dateStr) throw "Unspecified date string.";
 
      let dateComponents = dateStr.split(/\-/);
      let parsedDate = new Date(dateComponents[0], dateComponents[1] - 1, dateComponents[2]);
@@ -20,7 +20,7 @@
  function dateForDateTimeStrTuple(dateStr, timeStr) {
    // Translates the date and time strings to a Date object
    try {
-     if (dateStr == null) throw "Unspecified date string.";
+     if (!dateStr) throw "Unspecified date string.";
 
      var parsedDate = dateForDateString(dateStr);
 
@@ -37,7 +37,7 @@
 
  function dateForEpochTime(epochSec) {
    try {
-     if (epochSec == null) throw "Unspecified epoch time.";
+     if (!epochSec) throw "Unspecified epoch time.";
 
      var date = new Date(0); // The 0 there is the key, which sets the date to the epoch
      date.setUTCSeconds(epochSec);
@@ -50,8 +50,8 @@
 
  function dateStrForDate(date) {
    try {
-     if (date == null) throw "Unspecified date.";
-     return `${date.getDay()}-${date.getMonth() + 1}-${date.getYear()} ${date.getHours()}:${date.getMinutes()}`;
+     if (!date) throw "Unspecified date.";
+     return `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()} ${date.getHours()}:${("0" + date.getMinutes()).slice(-2)} GMT`;
    } catch (error) {
      return null;
    }
