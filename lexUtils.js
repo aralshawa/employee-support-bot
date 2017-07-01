@@ -40,6 +40,12 @@ function delegateResponse(sessionAttributes, slots) {
   });
 }
 
+function validationResult(valid, violatedSlot, messageText) {
+  return {
+    valid, violatedSlot, message: { contentType: 'PlainText', content: messageText }
+  };
+}
+
 module.exports = {
-  elicitSlotForIntent, confirmIntent, closeIntent, delegateResponse
+  elicitSlotForIntent, confirmIntent, closeIntent, delegateResponse, validationResult
 }

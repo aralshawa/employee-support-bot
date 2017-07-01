@@ -88,24 +88,18 @@ function deleteCall(phone, timestamp) {
  * Data Validation
  */
 
-function validationResult(valid, violatedSlot, messageText) {
-  return {
-    valid, violatedSlot, message: { contentType: 'PlainText', content: messageText }
-  };
-}
-
 function validateCall(slots) {
   const phone = slots.phone, date = slots.date, time = slots.time;
 
   // Validate 'name'
   // if (name.length == 0) {
-  //   return validationResult(false, "name", "Please specify your name for our records.");
+  //   return LexUtils.validationResult(false, "name", "Please specify your name for our records.");
   // }
 
   // Validate 'phone'
   let parsedPhone = phone ? PhoneNumber(phone, "US") : null;
   if (parsedPhone && !parsedPhone.isValid()) {
-    return validationResult(false, "phone", `The number "${phone}" is not valid. Please specify a different number.`);
+    return LexUtils.validationResult(false, "phone", `The number "${phone}" is not valid. Please specify a different number.`);
   }
 
   // TODO: Validate date and time is within business operating hours
@@ -114,10 +108,10 @@ function validateCall(slots) {
   if (parsedDate) {
     if (parsedDate < new Date()) {
       // If the provided date that is in the past
-      return validationResult(false, "date", "Please specify a date that is today or in the future.");
+      return LexUtils.validationResult(false, "date", "Please specify a date that is today or in the future.");
     }
   } else if (date) {
-    return validationResult(false, "date", "I could not comprehend the provided date. Can you please respecify it?");
+    return LexUtils.validationResult(false, "date", "I could not comprehend the provided date. Can you please respecify it?");
   }
 
   // Validate 'time'
@@ -128,7 +122,7 @@ function validateCall(slots) {
 
     if (parsedDate < new Date()) {
       // If the provided time that is in the past
-      return validationResult(false, "date", "Please specify a time later today.");
+      return LexUtils.validationResult(false, "date", "Please specify a time later today.");
     }
   }
 
