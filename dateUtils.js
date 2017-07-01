@@ -51,7 +51,14 @@
  function dateStrForDate(date) {
    try {
      if (!date) throw "Unspecified date.";
-     return `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()} ${date.getHours()}:${("0" + date.getMinutes()).slice(-2)} GMT`;
+
+     let day = ("0" + date.getDate()).slice(-2);
+     let mon = ("0" + (date.getMonth() + 1)).slice(-2);
+     let yr = date.getFullYear();
+     let hr = date.getHours();
+     let min = ("0" + date.getMinutes()).slice(-2);
+
+     return `${day}-${mon}-${yr} ${hr}:${min} GMT`;
    } catch (error) {
      return null;
    }
