@@ -5,6 +5,7 @@
 var PhoneNumber = require('awesome-phonenumber'),
     hasha = require('hasha'),
     LexUtils = require('./lexUtils'),
+    DateUtils = require('./dateUtils'),
     Database = require('./databaseUtils');
 
 /*
@@ -33,7 +34,7 @@ function getActiveCallsForNumber(phoneNumber) {
 
 function putActiveCall(phoneNumber, dateStr, timeStr) {
   var numericPhone = parseInt(phoneNumber.replace(/[^0-9]/g, ""), 10);
-  var parsedDate = dateForDateTimeStrTuple(dateStr, timeStr);
+  var parsedDate = DateUtils.dateForDateTimeStrTuple(dateStr, timeStr);
   var timestamp = parsedDate ? parsedDate.getTime() / 1000 : null;
 
   var params = {
@@ -52,61 +53,6 @@ function putActiveCall(phoneNumber, dateStr, timeStr) {
 /*
  * Data Validation
  */
-
-function dateForDateString(dateStr) {
-  // Assuming the standard YYY-MM-DD date format, parse the string and construct a date object
-  // A null return indicates a failure to parse the string
-  try {
-    if (dateStr == null) throw "Unspecified date string.";
-
-    let dateComponents = dateStr.split(/\-/);
-    let parsedDate = new Date(dateComponents[0], dateComponents[1] - 1, dateComponents[2]);
-
-    return !(isNaN(parsedDate.getTime())) ? parsedDate : null;
-  } catch (error) {
-    return null;
-  }
-}
-
-function dateForDateTimeStrTuple(dateStr, timeStr) {
-  // Translates the date and time strings to a Date object
-  try {
-    if (dateStr == null) throw "Unspecified date string.";
-
-    var parsedDate = dateForDateString(dateStr);
-
-    if (parsedDate && timeStr) {
-      var timeComponents = timeStr.split(":");
-      parsedDate.hours = timeComponents[0];
-      parsedDate.minutes = timeComponents[1];
-    }
-    return parsedDate;
-  } catch (error) {
-    return null;
-  }
-}
-
-function dateForEpochTime(epochSec) {
-  try {
-    if (epochSec == null) throw "Unspecified epoch time.";
-
-    var date = new Date(0); // The 0 there is the key, which sets the date to the epoch
-    date.setUTCSeconds(epochSec);
-
-    return date;
-  } catch (error) {
-    return null;
-  }
-}
-
-function dateStrForDate(date) {
-  try {
-    if (date == null) throw "Unspecified date.";
-    return `${date.getDay()}-${date.getMonth() + 1}-${date.getYear()} ${date.getHours()}:${date.getMinutes()}`;
-  } catch (error) {
-    return null;
-  }
-}
 
 function validationResult(valid, violatedSlot, messageText) {
   return {
@@ -129,7 +75,7 @@ function validateCall(slots) {
   }
 
   // Validate 'date'
-  var parsedDate = dateForDateString(date);
+  var parsedDate = DateUtils.dateForDateString(date);
   if (parsedDate) {
     if (parsedDate < new Date()) {
       // If the provided date that is in the past
@@ -186,7 +132,7 @@ function scheduleCall(request, callback) {
 
       if (result.err == null) {
         callback(LexUtils.closeIntent(sessionAttributes, 'Fulfilled',
-        { contentType: 'PlainText', content: `Thanks, Your call has been placed in queue. We'll call you at ${formattedPhone} around ${slots.time} on ${slots.date}.` }));
+        { contentType: 'PlainText', content: `Thanks! Your call has been placed in queue. We'll call you at ${formattedPhone} around ${slots.time} on ${slots.date}.` }));
       } else {
         callback(LexUtils.closeIntent(sessionAttributes, 'Failed',
         { contentType: 'PlainText', content: `Unfortunately, your request to call you at ${formattedPhone} around ${slots.time} on ${slots.date} could not be completed at this time. Please try again later.` }));
