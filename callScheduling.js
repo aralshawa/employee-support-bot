@@ -109,6 +109,10 @@ function validateCall(slots) {
     if (parsedDate < new Date()) {
       // If the provided date that is in the past
       return LexUtils.validationResult(false, "date", "Please specify a date that is today or in the future.");
+    } else if (parsedDate.getDay() == 6 || parsedDate.getDay() == 0) {
+      // If the provided date is not a work day
+      // TODO: Need to also validate company specific and public holidays
+      return LexUtils.validationResult(false, "date", "Sorry, we do not operate during the weekend. Please specify another date during the work week.");
     }
   } else if (date) {
     return LexUtils.validationResult(false, "date", "I could not comprehend the provided date. Can you please respecify it?");
@@ -120,6 +124,7 @@ function validateCall(slots) {
     parsedDate.hours = timeComponents[0];
     parsedDate.minutes = timeComponents[1];
 
+    // TODO: Perform a lookup against the 'employee-support-info' database for valid operating hours.
     if (parsedDate < new Date()) {
       // If the provided time that is in the past
       return LexUtils.validationResult(false, "date", "Please specify a time later today.");
