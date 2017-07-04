@@ -27,6 +27,11 @@ An enterprise application with a private integration into a company's [Slack](ht
 - Timecard review for the current user
 - Question regarding payroll → trigger phone call scheduling → automated call back from rep. bot
 
+![Application System Diagram](/design/system_diagram.png?raw=true)
+<p align="center">
+	A high level system diagram showcasing the Amazon Lex intents, associated data slots, and key Lambda functions.
+</p>
+
 Key Dependencies
 ------------
 * [claudia](https://github.com/claudiajs/claudia) - A JS framework to help create and deploy Node.js projects to [AWS Lambda](https://aws.amazon.com/documentation/lambda/) and [API Gateway](https://aws.amazon.com/api-gateway/).
