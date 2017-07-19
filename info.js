@@ -1,5 +1,5 @@
 /*
- * A AWS Lambda function to perform a info lookup depending on the request.
+ * An AWS Lambda function to perform a info lookup depending on the request.
  */
 
 var Database = require('./databaseUtils');

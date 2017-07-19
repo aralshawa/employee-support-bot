@@ -1,5 +1,5 @@
 /*
- * TODO
+ * An AWS Lambda function to handle the scheduling and re-scheduling of calls.
  */
 
 var PhoneNumber = require('awesome-phonenumber'),
@@ -13,25 +13,6 @@ var PhoneNumber = require('awesome-phonenumber'),
  */
 
 const EMPLOYEE_CALLS_TABLE = "employee-support-calls";
-
-function getCallsForNumber(phoneNumber) {
-  var numericPhone = parseInt(phoneNumber.replace(/[^0-9]/g, ""), 10);
-
-  var params = {
-      TableName: EMPLOYEE_CALLS_TABLE,
-      ProjectionExpression:"callID, #st, phone, #ts",
-      KeyConditionExpression: "phone = :phoneNumber",
-      ExpressionAttributeNames:{
-        "#st": "status",
-        "#ts": "timestamp"
-      },
-      ExpressionAttributeValues: {
-        ":phoneNumber": numericPhone
-      }
-  };
-
-  return Database.client.queryAsync(params);
-}
 
 function getActiveCallsForNumber(phoneNumber) {
   var numericPhone = parseInt(phoneNumber.replace(/[^0-9]/g, ""), 10);
@@ -65,7 +46,9 @@ function putActiveCall(phoneNumber, dateStr, timeStr) {
           callID: hasha([numericPhone.toString(), timestamp.toString()], {algorithm: 'md5'}),
           phone: numericPhone,
           status: 0,
-          timestamp
+          timestamp,
+          requested: Math.round(new Date().getTime() / 1000.0),
+          timezone: "GMT"
       }
   };
 
@@ -153,7 +136,7 @@ function scheduleCall(request, callback) {
         slots[`${validationResult.violatedSlot}`] = null;
         callback(LexUtils.elicitSlotForIntent(sessionAttributes, request.currentIntent.name, slots, validationResult.violatedSlot, validationResult.message));
       } else {
-        // Otherwise, let native DM rules determine how to elicit for slots and prompt for confirmation.  Pass price back in sessionAttributes once it can be calculated; otherwise clear any setting from sessionAttributes.
+        // Otherwise, let native DM rules determine how to elicit for slots and prompt for confirmation.
         callback(LexUtils.delegateResponse(sessionAttributes, slots));
       }
   } else {
