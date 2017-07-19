@@ -46,6 +46,24 @@ function validationResult(valid, violatedSlot, messageText) {
   };
 }
 
+/**
+ * Validates the slots against the provided validator and calls the responseCallback appropriately.
+ * Note: This is a mutating method. If an invalid field is found, the violated slot in the slots array is nulled.
+ */
+function validateAndReElicit(eventRequest, slots, sessionAttributes, validator, responseCallback) {
+  // Validate any slots and re-elicit
+  const validationResult = validator(slots);
+
+  if (!validationResult.valid) {
+    // If an invalid field exists
+    slots[`${validationResult.violatedSlot}`] = null;
+    responseCallback(elicitSlotForIntent(sessionAttributes, eventRequest.currentIntent.name, slots, validationResult.violatedSlot, validationResult.message));
+  } else {
+    // Otherwise, let native DM rules determine how to elicit for slots and prompt for confirmation.
+    responseCallback(delegateResponse(sessionAttributes, slots));
+  }
+}
+
 module.exports = {
-  elicitSlotForIntent, confirmIntent, closeIntent, delegateResponse, validationResult
+  elicitSlotForIntent, confirmIntent, closeIntent, delegateResponse, validationResult, validateAndReElicit
 }
