@@ -7,8 +7,8 @@ Rather than customers calling into an automated system from the get-go and being
 
 Project Scope & Context
 ------------
-
 An enterprise application with a private integration into a company's [Slack](https://slack.com) channel:
+- **[Bot Intent Specifications](/design/Intents.md)**
 - Contacting HR
 - Employee would initiate a ticket via the bot
 	- General info or personal file request
@@ -20,12 +20,6 @@ An enterprise application with a private integration into a company's [Slack](ht
 	- Can provide "in the meantime" resources
 	- Can cancel request
 - Distinct support staff bot to dequeue tickets, get a summary of the request, and initiate a fulfillment call.
-
-#### Bot Intents
-- HR business hours, locations → static data query from database
-- Punch in and out time cards → auto
-- Timecard review for the current user
-- Question regarding payroll → trigger phone call scheduling → automated call back from rep. bot
 
 ![Application System Diagram](/design/system_diagram.png?raw=true)
 <p align="center">
@@ -59,16 +53,21 @@ $ npm run create
 ```
 9. To synchronize any changes to the respective Lambda functions.
 
+Future Work
+------------
+- Addressing potential privacy concerns (e.x. scheduling a call with someone else's phone number or looking up if someone has a scheduled call)
+- Integrating with [Amazon Cognito](https://aws.amazon.com/cognito/) for user-specific actions and persistence
+- Support for [Amazon Connect](https://aws.amazon.com/connect/connect-lexchatbot/) contact centers integrations
+
 References
 ------------
-
 #### AWS Lex
-* [Amazon Lex - Programming Model](http://docs.aws.amazon.com/lambda/latest/dg/programming-model.html)
 * [Amazon Lex - Lambda Function Input Event and Response Format](http://docs.aws.amazon.com/lex/latest/dg/lambda-input-response-format.html)
 * [Lex & Alexa Slot Type Reference](https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/built-in-intent-ref/slot-type-reference)
 * [Integrating an Amazon Lex Bot with Slack](http://docs.aws.amazon.com/lex/latest/dg/slack-bot-association.html)
 
 #### AWS Lambda
+* [Programming Model](http://docs.aws.amazon.com/lambda/latest/dg/programming-model.html)
 * [AWS Lambda Function Handlers](http://docs.aws.amazon.com/lambda/latest/dg/nodejs-prog-model-handler.html)
 
 #### AWS DynamoDB
