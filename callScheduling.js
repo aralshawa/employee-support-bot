@@ -128,22 +128,10 @@ function scheduleCall(request, callback) {
   sessionAttributes.request = String(JSON.stringify(slots));
 
   if (request.invocationSource === "DialogCodeHook") {
-      // Validate any slots and re-elicit
-      const validationResult = validateCall(slots);
-
-      if (!validationResult.valid) {
-        // If an invalid field exists
-        slots[`${validationResult.violatedSlot}`] = null;
-        callback(LexUtils.elicitSlotForIntent(sessionAttributes, request.currentIntent.name, slots, validationResult.violatedSlot, validationResult.message));
-      } else {
-        // Otherwise, let native DM rules determine how to elicit for slots and prompt for confirmation.
-        callback(LexUtils.delegateResponse(sessionAttributes, slots));
-      }
+      LexUtils.validateAndReElicit(request, slots, sessionAttributes, validateCall, callback);
   } else {
     // Schedule phone call
     // If a call is already in queue for this number, request confirmation of replacement.
-    console.log(`scheduleCall sessionAttributes=${sessionAttributes}`);
-
     const formattedPhone = PhoneNumber(slots.phone, "US").getNumber('national');
 
     if (request.currentIntent.confirmationStatus == "None") {
@@ -189,6 +177,8 @@ function scheduleCall(request, callback) {
           deleteCall(prevRequest.phone, prevRequest.timestamp),
           putActiveCall(slots.phone, slots.date, slots.time)
         ]).then((results) => {
+          delete sessionAttributes.prevRequest;
+
           if (!results[0].err && !results[1].err) {
             callback(LexUtils.closeIntent(sessionAttributes, 'Fulfilled',
             { contentType: 'PlainText', content: `Great! The call request has been updated. We'll call you at ${formattedPhone} around ${slots.time} on ${slots.date}.`}));
