@@ -57,13 +57,31 @@ function validateRequest(slots) {
 function lookupCallStatus(request, callback) {
   const slots = request.currentIntent.slots;
   const sessionAttributes = request.sessionAttributes || {};
+  const confirmationStatus = request.currentIntent.confirmationStatus;
 
   if (request.invocationSource === "DialogCodeHook") {
-    LexUtils.validateAndReElicit(request, slots, sessionAttributes, validateRequest, callback);
+    const prevRequest = sessionAttributes.request ? JSON.parse(sessionAttributes.request) : null;
+    const previouslyUsedNumber = prevRequest ? prevRequest.phone : null;
+
+    if (confirmationStatus == "None" && previouslyUsedNumber) {
+      // If a number is found in the session, ask the user if they would like to use it
+      const formattedPhone = PhoneNumber(previouslyUsedNumber, "US").getNumber('national');
+      callback(LexUtils.confirmIntent(sessionAttributes, request.currentIntent.name, slots, { contentType: 'PlainText', content: `Is ${formattedPhone} your phone number?`}));
+    } else if (confirmationStatus == "Denied") {
+      // Clear previous state and re-elicit slots
+      delete sessionAttributes.request;
+      slots.phone = null;
+      callback(LexUtils.elicitSlotForIntent(sessionAttributes, request.currentIntent.name, slots, 'phone', { contentType: 'PlainText', content: `What phone number are you inquiring about?`}));
+    } else {
+      if (confirmationStatus == "Confirmed") {
+        // If the user confirmed the use of the session stored phone number, update the slot
+        slots.phone = previouslyUsedNumber;
+      }
+
+      LexUtils.validateAndReElicit(request, slots, sessionAttributes, validateRequest, callback);
+    }
   } else {
     // Look up the status of any calls for the provided phone number
-    console.log(`callStatus sessionAttributes=${sessionAttributes}`);
-
     const formattedPhone = PhoneNumber(slots.phone, "US").getNumber('national');
 
     getCallsForNumber(slots.phone).then((result) => {
