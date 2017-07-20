@@ -2,7 +2,7 @@
  * An AWS Lambda function to perform a info lookup depending on the request.
  */
 
-var Database = require('./databaseUtils');
+var Database = require('./utils/databaseUtils');
 
 const EMPLOYEE_SUPPORT_TABLE = "employee-support-info";
 

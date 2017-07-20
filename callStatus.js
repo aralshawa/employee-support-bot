@@ -4,9 +4,9 @@
 
 var PhoneNumber = require('awesome-phonenumber'),
     hasha = require('hasha'),
-    LexUtils = require('./lexUtils'),
-    DateUtils = require('./dateUtils'),
-    Database = require('./databaseUtils');
+    LexUtils = require('./utils/lexUtils'),
+    DateUtils = require('./utils/dateUtils'),
+    Database = require('./utils/databaseUtils');
 
 /*
  * Database Operations
